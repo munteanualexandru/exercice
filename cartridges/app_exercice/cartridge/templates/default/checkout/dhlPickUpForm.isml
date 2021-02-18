@@ -1,0 +1,24 @@
+
+<script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBIAgrgN_KW--JVQu7NlZZ13mAv7yke5X8&callback=initMap&libraries=&v=weekly"
+    async
+></script>
+<form action="${URLUtils.url('CheckoutShippingServices-CheckPickUpPoints')}" method="POST" name="DHL" id="DHL">
+    <div class="col-6">
+        <div class="form-group">
+            <label class="form-control-label" for="zipCode">
+                TODO! Resource Label
+            </label>
+            <input type="text" class="form-control" id="zipCode" name="zipCode">
+            <div class="invalid-feedback"></div>
+        </div>
+    </div>
+
+    <button type="submit" name="save" class="btn btn-save btn-block btn-primary">${Resource.msg('button.save','account',null)}</button>
+</form>    
+
+
+<div class="col-sm-6">
+    <div class="map-canvas" style="width: 500px; height:500px;">  
+    </div>
+</div>
