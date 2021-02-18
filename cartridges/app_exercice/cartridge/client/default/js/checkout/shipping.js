@@ -1,3 +1,4 @@
+/* globals google */
 'use strict';
 
 var addressHelpers = require('./address');
@@ -589,12 +590,92 @@ function selectShippingMethodAjax(url, urlParams, el) {
                         el: el
                     }
                 );
+
+                if (data.showPickUpPoints) {
+                    var $formEl = $(data.renderTemplateHelper);
+                    $formEl.on("submit", function (e) {
+                        e.preventDefault();
+                        var form = $(this);
+
+                        $.ajax({
+                            url: form.attr("action"),
+                            type: "post",
+                            data: form.serialize(),
+                            success(data) {
+                                generateMap(data.storeList);
+                            }
+                        });
+                    });
+
+                    $(".pick-up-modal").html($formEl);
+                }
             }
             $.spinner().stop();
         })
         .fail(function () {
             $.spinner().stop();
         });
+}
+
+function generateMap(data) {
+    var map;
+    var coordonates = data[0].geoLocation;
+
+    var latlng = new google.maps.LatLng(coordonates.latitude, coordonates.longitude);
+
+    var mapOptions = {
+        scrollwheel: false,
+        zoom: 4,
+        center: latlng
+    };
+
+    map = new google.maps.Map($(".map-canvas")[0], mapOptions);
+    var mapdiv = data;
+
+    var bounds = new google.maps.LatLngBounds();
+
+    var markerImg = {
+        path:
+            "M13.5,30.1460153 L16.8554555,25.5 L20.0024287,25.5 C23.039087,25.5 25.5," +
+            "23.0388955 25.5,20.0024287 L25.5,5.99757128 C25.5,2.96091298 23.0388955,0.5 " +
+            "20.0024287,0.5 L5.99757128,0.5 C2.96091298,0.5 0.5,2.96110446 0.5,5.99757128 " +
+            "L0.5,20.0024287 C0.5,23.039087 2.96110446,25.5 5.99757128,25.5 L10.1445445," +
+            "25.5 L13.5,30.1460153 Z",
+        fillColor: "#0070d2",
+        fillOpacity: 1,
+        scale: 1.1,
+        strokeColor: "white",
+        strokeWeight: 1,
+        anchor: new google.maps.Point(13, 30),
+        labelOrigin: new google.maps.Point(12, 12),
+        scaledSize: new google.maps.Size(42, 68)
+    };
+
+    mapdiv.forEach(function (item) {
+        var storeLocation = new google.maps.LatLng(item.geoLocation.latitude, item.geoLocation.longitude);
+        var marker = new google.maps.Marker({
+            position: storeLocation,
+            map: map,
+            title: item.id,
+            icon: markerImg,
+            label: { text: item.id, color: "white", fontSize: "16px" }
+        });
+
+        marker.addListener("click", function () {
+            $("#shippingAddressOnedefault").val(item.address.street + " " + item.address.number);
+            $("#shippingAddressCitydefault").val(item.address.city);
+            $("#shippingZipCodedefault").val(item.address.postalCode);
+            $("#shippingCountrydefault #" + item.countryCode).prop("selected", true);
+            $("#shippingCountrydefault").change();
+        });
+
+        // Create a minimum bound based on a set of storeLocations
+        bounds.extend(marker.position);
+    });
+    // Fit the all the store marks in the center of a minimum bounds when any store has been found.
+    if (mapdiv && mapdiv.length !== 0) {
+        map.fitBounds(bounds);
+    }
 }
 
 /**
